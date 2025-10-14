@@ -1,0 +1,15 @@
+activities.json
+grades.json
+env/
+reportsDB.db
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+docker-compose.yml
+*.log
+.DS_Store
+stats.json
+node_modules/
