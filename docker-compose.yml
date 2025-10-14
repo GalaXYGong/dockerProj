@@ -1,0 +1,45 @@
+services:
+  mongodb_db:
+    hostname: 127.0.0.1
+    image: mongo:6.0 # 推荐使用特定版本
+    container_name: mongodb_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db # 建议添加持久化卷
+    restart: always
+  mysql_db:
+    image: mysql:8.0
+    hostname: 127.0.0.1
+    container_name: mysql_db
+    environment:
+      # ⚠️ 严格使用用户提供的配置: 
+      MYSQL_DATABASE: reportsDB
+      MYSQL_USER: sqlite 
+      MYSQL_PASSWORD: 123456
+      # 根密码也设置为一致，简化测试环境配置
+      MYSQL_ROOT_PASSWORD: 123456 
+    ports:
+      # 外部端口:内部端口
+      - "3306:3306"
+    volumes:
+      - mysql_data:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+
+  # analytics_service:
+  #   build: 
+  #     context: ./analytics_service # 假设你的文件在这个文件夹下
+  #     dockerfile: Dockerfile
+  #   container_name: analytics_service
+  #   ports:
+  #     - "8100:8100" # API 端口
+  #   depends_on:
+  #     - mongodb_db
+  #     - storage_service # 确保能访问 Storage Service
+  #   volumes:
+  #     - ./analytics_service/app_conf.yml:/usr/src/app/app_conf.yml
+  #     # ... 卷映射
+
+volumes:
+  mongo_data:
+  mysql_data:

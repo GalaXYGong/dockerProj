@@ -1,0 +1,31 @@
+# version: 1
+# stats:
+#   url: http://localhost:8100/stats
+# scheduler:
+#   interval: 5
+# json_path: "./stats.json"
+# urls:
+#   url_activity: "http://localhost:8090/store/activity"
+#   url_grade: "http://localhost:8090/store/grade"
+
+
+# Scheduler Interval in seconds (e.g., run every 10 seconds)
+scheduler:
+  interval: 10
+
+# MongoDB Configuration
+mongodb:
+  hostname: 127.0.0.1 # 这是 Docker Compose 中 MongoDB 服务的名字
+  port: 27017
+  db: analytics_results
+  collection: aggregate_stats
+
+# Status API URL (if needed, but not critical for this service)
+stats:
+  url: /stats
+
+mysql:
+  host: localhost # 可能是 'localhost' 或 docker compose 中的服务名
+  user: sqlite
+  password: "123456"
+  database: reportsDB # 存储 grade_readings 和 activity_readings 的数据库名

@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Student Data API
+  description: This is a student data collection system that receives different types of students' academic and activity reports from schools.
+  contact:
+    email: xgong12@my.bcit.ca
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+paths:
+  /schools/reports/grades:
+    post:
+      summary: Submit a batch of student grades data by school
+      operationId: app.report_grades
+      description: Adds a batch of academic data readings from schools
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradesBatch'
+      responses:
+        '201':
+          description: batch successfully received
+        '400':
+          description: 'invalid input, object invalid'
+  /schools/reports/activities:
+    post:
+      summary: Submit a batch of student activity data by school
+      operationId: app.report_activities
+      description: Adds a batch of activities data readings from schools
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityBatch'
+      responses:
+        '201':
+          description: batch successfully received
+        '400':
+          description: 'invalid input, object invalid'
+components: 
+  schemas:
+    GradesBatch:
+      required: 
+        - school_id
+        - school_name
+        - reporting_date
+        - reports
+      properties:
+        school_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        school_name:
+          type: string
+          example: "BCIT"
+        reporting_date:
+          type: string
+          format: date-time
+          example: "2016-08-29"
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Grades'
+          description: List of student grade reports
+    Grades:
+      type: object
+      required:
+        - student_id
+        - student_name
+        - course
+        - assignment
+        - score
+        - timestamp
+      properties:
+        student_id:
+          type: string
+          example: "A01384150"
+        student_name:
+          type: string
+          example: "Xinyu Gong"
+        course:
+          type: string
+          example: "ACIT3855 Service Based Architecture"
+        assignment:
+          type: string
+        score:
+          type: number
+          format: float
+          example: 99
+        timestamp:
+          type: string
+          format: date-time
+          example:  "2016-08-29T09:12:33.001Z"
+    ActivityBatch:
+      type: object
+      required:
+        - school_id
+        - school_name
+        - reporting_date
+        - reports
+      properties:
+        school_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        school_name:
+          type: string
+          example: "BCIT"
+        reporting_date:
+          type: string
+          format: date-time
+          example: "2016-08-29"
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activities'
+          description: List of student activity reports
+    Activities:
+      type: object
+      required:
+        - student_id
+        - student_name
+        - activity_type
+        - activity_name
+        - hours
+        - timestamp
+      properties:
+        student_id:
+          type: string
+          example: "A01384150"
+        student_name:
+          type: string
+          example: "Xinyu Gong"
+        activity_type:
+          type: string
+          example: "volunteering"
+        activity_name:
+          type: string
+          example: "Digital Coffee"
+        hours:
+          type: number
+          format: float
+          example: "0.5"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"

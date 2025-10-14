@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: Student Data API Storage
+  description: This is a student data collection system that receives different types of students' academic and activity reports from schools.
+  contact:
+    email: xgong12@my.bcit.ca
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+paths:
+  /store/grade:
+    get:
+      summary: gets responses of grades with start_timestamp and end_timestamp
+      operationId: app.get_grades
+      description: gets responses of grades received over a time span
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: start Timestamp in milliseconds since Epoch
+          schema:
+            type: integer
+            format: int64
+            example: 1760022003750
+        - name: end_timestamp
+          in: query
+          description: end Timestamp in milliseconds since Epoch
+          schema:
+            type: integer
+            format: int64
+            example: 1760022003751
+      responses:
+        '200':
+          description: Successfully returned a list of grades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Grade'
+
+    post:
+      summary: Submit a single student grade data by school
+      operationId: app.report_grade
+      description: Adds a single academic data reading from a school
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Grade'
+      responses:
+        '201':
+          description: batch successfully received
+        '400':
+          description: 'invalid input, object invalid'
+  /store/activity:
+    get:
+      summary: gets responses of activity with start_timestamp and end_timestamp
+      operationId: app.get_activities
+      description: gets responses of activities received over a time span
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: start Timestamp in milliseconds since Epoch
+          schema:
+            type: integer
+            format: int64
+            example: 1760022003750
+        - name: end_timestamp
+          in: query
+          description: end Timestamp in milliseconds since Epoch
+          schema:
+            type: integer
+            format: int64
+            example: 1760022003751
+      responses:
+        '200':
+          description: Successfully returned a list of academicctivities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+    post:
+      summary: Submit a single student activity data by school
+      operationId: app.report_activity
+      description: Adds a single activity data reading from a school
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '201':
+          description: batch successfully received
+        '400':
+          description: 'invalid input, object invalid'
+components: 
+  schemas:
+    Grade:
+      type: object
+      required: 
+        - school_id
+        - school_name
+        - reporting_date
+        - student_id
+        - student_name
+        - course
+        - assignment
+        - score
+        - timestamp
+        - trace_id
+      properties:
+        school_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        school_name:
+          type: string
+          example: "BCIT"
+        reporting_date:
+          type: string
+          format: date-time
+          example: "2016-08-29"
+        student_id:
+          type: string
+          example: "A01384150"
+        student_name:
+          type: string
+          example: "Xinyu Gong"
+        course:
+          type: string
+          example: "ACIT3855 Service Based Architecture"
+        assignment:
+          type: string
+          example: "lab3"
+        score:
+          type: number
+          format: float
+          example: 99
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        trace_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+    Activity:
+      type: object
+      required:
+        - school_id
+        - school_name
+        - reporting_date
+        - student_id
+        - student_name
+        - activity_type
+        - activity_name
+        - hours
+        - timestamp
+        - trace_id
+      properties:
+        school_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        school_name:
+          type: string
+          example: "BCIT"
+        reporting_date:
+          type: string
+          format: date-time
+          example: "2016-08-29"
+        student_id:
+          type: string
+          example: "A01384150"
+        student_name:
+          type: string
+          example: "Xinyu Gong"
+        activity_type:
+          type: string
+          example: "volunteering"
+        activity_name:
+          type: string
+          example: "Digital Coffee"
+        hours:
+          type: number
+          format: float
+          example: 0.5
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        trace_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"

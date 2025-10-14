@@ -1,0 +1,74 @@
+openapi: 3.0.0
+info:
+  description: This API provides event stats
+  version: "1.0.0"
+  title: Stats API
+  contact:
+    email: xgong12@my.bcit.ca
+paths:
+  /stats:
+    get: 
+      summary: Gets the event status
+      operationId: app.get_stats
+      description: Gets GradeReading and ActivityReading statistics, including min, max, count, and average values.
+      responses:
+        '200':
+          description: Successfully returned a stats object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingStatus"
+        '400':
+          description: invalid requestBody
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: string
+components:
+  schemas:
+    ReadingStatus:
+      required:
+        - num_grade_readings
+        - min_grade_readings
+        - max_grade_readings
+        - avg_grade_readings # 新增字段
+        - num_activity_readings
+        - max_activity_hours
+        - min_activity_hours
+        - avg_activity_hours # 新增字段
+      properties:
+        num_grade_readings:
+          type: integer
+          format: int64
+          example: 10
+        min_grade_readings:
+          type: number
+          format: float
+          example: 65.0
+        max_grade_readings:
+          type: number
+          format: float
+          example: 98.0
+        avg_grade_readings: # 平均成绩
+          type: number
+          format: float
+          example: 85.50
+        num_activity_readings:
+          type: integer
+          format: int64
+          example: 10
+        max_activity_hours:
+          type: number
+          format: float
+          example: 10.5
+        min_activity_hours:
+          type: number
+          format: float
+          example: 1.5
+        avg_activity_hours: # 平均活动小时数
+          type: number
+          format: float
+          example: 5.33

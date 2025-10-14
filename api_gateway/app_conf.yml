@@ -1,0 +1,13 @@
+# File: api_gateway/app_conf.yml
+
+# Analytics Service (Processing Service) Configuration
+# 用于代理请求，使用 Docker Compose 服务名
+analytics_service:
+  host: localhost
+  port: 8100
+
+data_entry_service:
+  host: localhost
+  port: 8071 # 已更新为 Data Entry Service 运行的端口
+  path: /data_entry_service # 已更新为用户期望的路径
+
