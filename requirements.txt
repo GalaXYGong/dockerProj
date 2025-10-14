@@ -1,12 +1,13 @@
 connexion[swagger-ui]
+sqlalchemy
+connexion[flask]
+connexion[uvicorn]
 PyYAML
 httpx
 APScheduler
 pymongo 
-connexion
-flask
 python-json-logger
 pymongo
 mysql-connector-python
 apscheduler
-python-dateutil 
+python-dateutil
