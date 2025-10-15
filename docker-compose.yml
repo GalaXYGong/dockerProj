@@ -1,6 +1,6 @@
 services:
   mongodb_db:
-    hostname: 127.0.0.1
+    hostname: localhost
     image: mongo:6.0 # 推荐使用特定版本
     container_name: mongodb_db
     ports:
@@ -10,7 +10,7 @@ services:
     restart: always
   mysql_db:
     image: mysql:8.0
-    hostname: 127.0.0.1
+    hostname:  localhost
     container_name: mysql_db
     environment:
       # ⚠️ 严格使用用户提供的配置: 
@@ -25,21 +25,53 @@ services:
     volumes:
       - mysql_data:/docker-entrypoint-initdb.d/init.sql
     restart: always
-
-  # analytics_service:
+  # storage:
   #   build: 
-  #     context: ./analytics_service # 假设你的文件在这个文件夹下
-  #     dockerfile: Dockerfile
-  #   container_name: analytics_service
+  #     context: ./storage # Tells Docker where the Dockerfile is
   #   ports:
-  #     - "8100:8100" # API 端口
+  #     - "8090:8090" # Map host port 8090 to container port 8090
   #   depends_on:
+  #     # Ensure it starts only after necessary services are up
+  #     - mysql_db
+  #   restart: always 
+  # api_gateway:
+  #   build: 
+  #     context: ./api_gateway # Tells Docker where the Dockerfile is
+  #   ports:
+  #     - "8099:8099" # Map host port 8099 to container port 8099
+  #   # Restart policy is often useful for services
+  #   depends_on:
+  #     # Ensure it starts only after necessary services are up
+  #     - storage
+  #   restart: always 
+  # auth_service:
+  #   build: 
+  #     context: ./auth_service # Tells Docker where the Dockerfile is
+  #   ports:
+  #     - "8070:8070" # Map host port 8070 to container port 8070
+  #   depends_on:
+  #     # Ensure it starts only after necessary services are up
+  #     - storage
+  #   restart: always 
+  # data_entry_web:
+  #   build: 
+  #     context: ./data_entry_web # Tells Docker where the Dockerfile is
+  #   ports:
+  #     - "8071:8071" # Map host port 8071 to container port 8071
+  #   depends_on:
+  #     # Ensure it starts only after necessary services are up
+  #     - storage
+  #   restart: always
+  # processing:
+  #   build: 
+  #     context: ./processing # Tells Docker where the Dockerfile is
+  #   ports:
+  #     - "8100:8100" # Map host port 8100 to container port
+  #   depends_on:
+  #     # Ensure it starts only after necessary services are up
   #     - mongodb_db
-  #     - storage_service # 确保能访问 Storage Service
-  #   volumes:
-  #     - ./analytics_service/app_conf.yml:/usr/src/app/app_conf.yml
-  #     # ... 卷映射
-
+  #     - storage
+  #   restart: always
 volumes:
   mongo_data:
   mysql_data:

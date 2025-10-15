@@ -1,0 +1,19 @@
+#Dependencies and Caches
+**/node_modules
+**/.venv
+**/env
+**/pycache
+*.pyc
+*.log
+
+#Git and Editor Files
+.git
+.gitignore
+.DS_Store
+.vscode/
+
+#Build Artifacts
+dist/
+build/
+*.zip
+*.tar.gz

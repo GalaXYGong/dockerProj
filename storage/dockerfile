@@ -1,0 +1,22 @@
+# File: api_gateway/Dockerfile
+# Use a slim Python base image for smaller size
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+COPY log_conf.yml .
+COPY app_conf.yml .
+COPY bcit-142-student_reports_storage_api-1.0.0-swagger.yaml .
+COPY create_tables.py .
+COPY drop_tables.py .
+COPY models.py .
+
+# The API Gateway runs on port 8090
+EXPOSE 8090
+
+# Command to run the service
+CMD [ "sh", "-c", "python create_tables.py && python app.py" ]
+

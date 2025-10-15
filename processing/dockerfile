@@ -1,0 +1,20 @@
+# File: processing/Dockerfile
+# Use a slim Python base image for smaller size
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+COPY log_conf.yml .
+COPY app_conf.yml .
+COPY OpenAPI_processing.yaml .
+#COPY processing/reset_mongo.py .
+
+# The API Gateway runs on port 8100
+EXPOSE 8100
+
+# Command to run the service
+CMD [ "python", "app.py" ]
+

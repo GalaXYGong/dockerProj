@@ -1,0 +1,13 @@
+connexion[swagger-ui]
+sqlalchemy
+connexion[flask]
+connexion[uvicorn]
+PyYAML
+httpx
+APScheduler
+pymongo 
+python-json-logger
+pymongo
+mysql-connector-python
+apscheduler
+python-dateutil

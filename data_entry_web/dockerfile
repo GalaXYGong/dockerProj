@@ -1,0 +1,16 @@
+# File: api_gateway/Dockerfile
+# Use a slim Python base image for smaller size
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+
+# The API Gateway runs on port 8071
+EXPOSE 8071
+
+# Command to run the service
+CMD [ "python", "app.py" ]
+
