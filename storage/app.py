@@ -138,5 +138,4 @@ app = connexion.FlaskApp(__name__, specification_dir='')
 app.add_api('bcit-142-student_reports_storage_api-1.0.0-swagger.yaml',strict_validation=True, validate_responses=True)
 
 if __name__ == "__main__":
-    app.run(port=8090)
-
+    app.run(port=8090,host='0.0.0.0')
