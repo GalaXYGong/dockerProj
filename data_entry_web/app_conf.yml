@@ -1,0 +1,4 @@
+storage:
+  host: storage
+  port: 8090
+

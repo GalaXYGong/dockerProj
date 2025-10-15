@@ -5,8 +5,10 @@
  */
 const express = require('express');
 const app = express();
-// 端口更新为 8070
-const PORT = 8070;
+
+// **修复：设置主机为 0.0.0.0 确保在 Docker 容器中可从外部访问**
+const HOST = '0.0.0.0';
+const PORT = 8070; // 端口更新为 8070
 
 // 硬编码的测试用户凭证 (用于演示目的)
 const MOCK_USER = 'test';
@@ -61,7 +63,8 @@ app.get('/', (req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, () => {
-    console.log(`Authentication Service listening on port ${PORT}`);
+// **关键改动：将 HOST 变量 (0.0.0.0) 传递给 listen 函数**
+app.listen(PORT, HOST, () => {
+    console.log(`Authentication Service listening on ${HOST}:${PORT}`);
     console.log(`Test with: POST http://localhost:${PORT}/authenticate`);
 });

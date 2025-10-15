@@ -15,7 +15,7 @@ scheduler:
 
 # MongoDB Configuration
 mongodb:
-  hostname: 127.0.0.1 # 这是 Docker Compose 中 MongoDB 服务的名字
+  hostname: mongodb_db # 这是 Docker Compose 中 MongoDB 服务的名字
   port: 27017
   db: analytics_results
   collection: aggregate_stats
@@ -25,7 +25,7 @@ stats:
   url: /stats
 
 mysql:
-  host: localhost # 可能是 'localhost' 或 docker compose 中的服务名
+  host: mysql_db
   user: sqlite
   password: "123456"
   database: reportsDB # 存储 grade_readings 和 activity_readings 的数据库名

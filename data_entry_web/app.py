@@ -2,15 +2,20 @@ import os
 import httpx
 import time
 import uuid
-import json
+import json,yaml
 from datetime import datetime
 from flask import Flask, request, render_template_string, redirect, url_for
 
 # Initialize Flask App
 app = Flask(__name__)
 
+with open('./app_conf.yml', 'r') as f:
+    app_config = yaml.safe_load(f.read())
+
+STORAGE_HOST = app_config['storage']['host']
+STORAGE_PORT = app_config['storage']['port']
 # --- Microservice Configuration ---
-STORAGE_SERVICE_URL = 'http://localhost:8090' # Storage Service Base URL
+STORAGE_SERVICE_URL = f'http://{STORAGE_HOST}:{STORAGE_PORT}' # Storage Service Base URL
 PORT = 8071 # Data Entry Web App running port
 
 # --- Helper Functions ---

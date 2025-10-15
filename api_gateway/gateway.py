@@ -30,9 +30,10 @@ ANALYTICS_PORT = app_config['analytics_service']['port']
 DATA_ENTRY_HOST = app_config['data_entry_service']['host']
 DATA_ENTRY_PORT = app_config['data_entry_service']['port']
 DATA_ENTRY_PATH = app_config['data_entry_service']['path']
-
+AUTH_SERVICE_HOST = app_config['auth_service']['host']
+AUTH_SERVICE_PORT = app_config['auth_service']['port']
 # Assuming Auth service URL based on common setup (port 8070)
-AUTH_SERVICE_URL = 'http://localhost:8070/authenticate' 
+AUTH_SERVICE_URL = f'http://{AUTH_SERVICE_HOST}:{AUTH_SERVICE_PORT}/authenticate'
 
 
 # --- Authentication Helper ---

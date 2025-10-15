@@ -18,5 +18,5 @@ COPY models.py .
 EXPOSE 8090
 
 # Command to run the service
-CMD [ "sh", "-c", "python create_tables.py && python app.py" ]
+# CMD [ "sh", "-c", "python create_tables.py && python app.py" ]
 
