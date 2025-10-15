@@ -60,11 +60,18 @@ def get_latest_stats():
     """
     从 MongoDB 获取最新的统计数据。
     同时初始化所有新增的平均值和总和字段。
+    
+    初始化最小值需要设置为无限大，最大值需要设置为无限小，以保证第一次计算正确。
     """
     initial_stats = {
-        "num_grade_readings": 0, "min_grade_readings": 0.0, "max_grade_readings": 0.0,
+        "num_grade_readings": 0, 
+        "min_grade_readings": float('inf'), 
+        "max_grade_readings": float('-inf'), 
         "sum_grade_readings": 0.0, "avg_grade_readings": 0.0, 
-        "num_activity_readings": 0, "max_activity_hours": 0.0, "min_activity_hours": 0.0,
+        
+        "num_activity_readings": 0, 
+        "max_activity_hours": float('-inf'), 
+        "min_activity_hours": float('inf'),
         "sum_activity_hours": 0.0, "avg_activity_hours": 0.0, 
         "last_updated": 0 # last_updated 使用毫秒级时间戳
     }
@@ -87,7 +94,7 @@ def get_latest_stats():
             return latest_doc
             
         else:
-            logger.warning("No previous stats found in MongoDB. Initializing stats.")
+            logger.warning("No previous stats found in MongoDB. Initializing stats with inf/neg_inf.")
             return initial_stats
             
     except Exception as e:
@@ -163,26 +170,43 @@ def get_events_from_mysql(event_type, start_timestamp_ms):
 def calculate_and_store_stats(stats, content_activity, content_grade, end):
     """
     计算新的统计数据（包括平均值）并将其存储到 MongoDB。
+    
+    此函数增加了逻辑来修复旧版本中 min 值被错误存储为 0.0 的历史数据腐败问题。
     """
     logger.debug(f"Calculating stats based on {len(content_grade)} raw grade records and {len(content_activity)} raw activity records.")
     
-    # 1. 初始化并获取旧的统计数据
+    # 历史记录中的最小/大值和计数
+    hist_min_grade = stats.get('min_grade_readings', float('inf'))
+    hist_max_grade = stats.get('max_grade_readings', float('-inf'))
+    hist_num_grade = stats.get('num_grade_readings', 0)
+    
+    hist_min_activity = stats.get('min_activity_hours', float('inf'))
+    hist_max_activity = stats.get('max_activity_hours', float('-inf'))
+    hist_num_activity = stats.get('num_activity_readings', 0)
+
+    # 1. 初始化新的统计数据结构
     new_stats = {
         "last_updated": end, 
         # 获取上次的累积总和和计数
-        "num_grade_readings": stats.get('num_grade_readings', 0),
+        "num_grade_readings": hist_num_grade,
         "sum_grade_readings": stats.get('sum_grade_readings', 0.0),
-        "min_grade_readings": stats.get('min_grade_readings', float('inf')),
-        "max_grade_readings": stats.get('max_grade_readings', float('-inf')),
+        "min_grade_readings": hist_min_grade,
+        "max_grade_readings": hist_max_grade,
         
-        "num_activity_readings": stats.get('num_activity_readings', 0),
+        "num_activity_readings": hist_num_activity,
         "sum_activity_hours": stats.get('sum_activity_hours', 0.0),
-        "min_activity_hours": stats.get('min_activity_hours', float('inf')),
-        "max_activity_hours": stats.get('max_activity_hours', float('-inf')),
+        "min_activity_hours": hist_min_activity,
+        "max_activity_hours": hist_max_activity,
     }
     
     # --- 2. 计算分数统计 (Grade Stats) ---
     list_grade_readings = [item.get("score") for item in content_grade if isinstance(item.get("score"), (int, float))]
+    
+    # 修复逻辑：检查历史最小分是否为腐败的 0.0
+    # 如果历史总数大于 0，且历史最小分是 0.0，且新数据中没有 0.0，则临时重置为 inf
+    if hist_num_grade > 0 and hist_min_grade == 0.0 and 0.0 not in list_grade_readings:
+        new_stats["min_grade_readings"] = float('inf')
+        logger.warning("Historical min_grade_readings was 0.0 but no 0.0 in new data. Resetting min calculation base to inf.")
     
     # 更新总数和总和
     new_stats["num_grade_readings"] += len(list_grade_readings)
@@ -191,6 +215,7 @@ def calculate_and_store_stats(stats, content_activity, content_grade, end):
 
     # 更新 Min/Max
     if list_grade_readings:
+        # 这里的 new_stats["min_grade_readings"] 现在要么是正确的历史值，要么是 inf (如果被重置了)
         new_stats["min_grade_readings"] = min(new_stats["min_grade_readings"], min(list_grade_readings))
         new_stats["max_grade_readings"] = max(new_stats["max_grade_readings"], max(list_grade_readings))
 
@@ -203,6 +228,11 @@ def calculate_and_store_stats(stats, content_activity, content_grade, end):
     # --- 3. 计算活动统计 (Activity Stats) ---
     list_activity_readings = [item.get("hours") for item in content_activity if isinstance(item.get("hours"), (int, float))]
     
+    # 修复逻辑：检查历史最小活动小时数是否为腐败的 0.0
+    if hist_num_activity > 0 and hist_min_activity == 0.0 and 0.0 not in list_activity_readings:
+        new_stats["min_activity_hours"] = float('inf')
+        logger.warning("Historical min_activity_hours was 0.0 but no 0.0 in new data. Resetting min calculation base to inf.")
+        
     # 更新总数和总和
     new_stats["num_activity_readings"] += len(list_activity_readings)
     new_activity_sum_increment = sum(list_activity_readings)
@@ -270,6 +300,17 @@ def get_stats():
     # 过滤掉内部的 sum_ 字段，只返回 API 需要的字段
     api_response = {k: v for k, v in latest_stats.items() if not k.startswith('sum_')}
     
+    # 确保在 API 响应中，如果 min 值是 inf/neg_inf，显示为 0.0 (以防 get_latest_stats 返回了 inf/neg_inf)
+    if api_response.get("min_grade_readings") == float('inf'):
+        api_response["min_grade_readings"] = 0.0
+    if api_response.get("min_activity_hours") == float('inf'):
+        api_response["min_activity_hours"] = 0.0
+        
+    if api_response.get("max_grade_readings") == float('-inf'):
+        api_response["max_grade_readings"] = 0.0
+    if api_response.get("max_activity_hours") == float('-inf'):
+        api_response["max_activity_hours"] = 0.0
+
     logger.debug("Returning latest stats: %s", api_response)
     logger.info("The request has been completed.")
     return api_response, 200
