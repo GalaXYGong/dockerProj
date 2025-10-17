@@ -1,5 +1,0 @@
-version: 1
-grade:
-  url: http://localhost:8090/store/grade
-activity:
-  url: http://localhost:8090/store/activity
