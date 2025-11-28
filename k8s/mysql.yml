@@ -49,7 +49,8 @@ spec:
       name: mysql-persistent-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: standard # <--- 修正为 GKE 默认的 'standard' 存储类
+      # 替换为您集群中实际可用的 StorageClass 名称（例如：default, standard, gce-pd-standard 等）
+      storageClassName: ["standard-rwo"] 
       resources:
         requests:
           storage: 5Gi
