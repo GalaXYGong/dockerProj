@@ -28,18 +28,18 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: mysql:8.0 # 使用官方公共镜像，如果您有私有镜像请替换
+        image: mysql:8.0
         env:
         - name: MYSQL_DATABASE
-          value: reportsDB
+          value: "reportsDB"
         - name: MYSQL_USER
-          value: sqlite
+          value: "sqlite"
         - name: MYSQL_PASSWORD
-          value: 123456
+          value: "123456" # 修正：添加双引号，值必须是字符串
         - name: MYSQL_ROOT_PASSWORD
-          value: 123456
+          value: "123456" # 修正：添加双引号，值必须是字符串
         ports:
-        - containerPort: 3306
+        - containerPort: 3306 # 正确：数字，没有引号
           name: mysql-port
         volumeMounts:
         - name: mysql-persistent-storage
@@ -52,4 +52,4 @@ spec:
       storageClassName: standard-gcp
       resources:
         requests:
-          storage: 5Gi
+          storage: 5Gi # 正确：字符串类型，包含单位
