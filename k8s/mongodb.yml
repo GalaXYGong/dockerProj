@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app: mongodb
   serviceName: "mongodb-svc"
-  replicas: 1 # 初始只需要一个副本
+  replicas: 1 # 确保只有一个副本，因为我们使用 ReadWriteOnce 模式
   template:
     metadata:
       labels:
@@ -28,19 +28,21 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:6.0 # 使用官方公共镜像，如果您有私有镜像请替换
+        image: mongo:6.0 # 推荐使用官方公共镜像
         ports:
         - containerPort: 27017
           name: mongodb-port
         volumeMounts:
         - name: mongo-persistent-storage
-          mountPath: /data/db
+          mountPath: /data/db # MongoDB 默认数据存储路径
   volumeClaimTemplates:
   - metadata:
       name: mongo-persistent-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: standard-gcp # GKE/GCP 环境下的标准 StorageClass
+      # 统一使用 'standard' 存储类以解决 PVC 绑定和调度问题
+      storageClassName: standard 
+      volumeMode: Filesystem
       resources:
         requests:
           storage: 5Gi
