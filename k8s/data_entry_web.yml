@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-entry-web-svc
+  labels:
+    app: data-entry-web
+spec:
+  ports:
+  - port: 8071
+    targetPort: 8071
+  selector:
+    app: data-entry-web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-entry-web-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: data-entry-web
+  template:
+    metadata:
+      labels:
+        app: data-entry-web
+    spec:
+      # InitContainer: 等待 Storage 服务启动
+      initContainers:
+      - name: wait-for-storage
+        image: busybox
+        command: ['sh', '-c', 'echo Waiting for Storage... && until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
+      containers:
+      - name: data-entry-web
+        image: galaxygong/data_entry_web:v1.0 # <<<<<<<< 替换为您的镜像
+        ports:
+        - containerPort: 8071
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"

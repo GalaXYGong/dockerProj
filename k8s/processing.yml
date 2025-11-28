@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: processing-svc
+  labels:
+    app: processing
+spec:
+  ports:
+  - port: 8100
+    targetPort: 8100
+  selector:
+    app: processing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processing-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: processing
+  template:
+    metadata:
+      labels:
+        app: processing
+    spec:
+      # InitContainer: 等待 MongoDB 和 Storage 服务启动
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox
+        command: ['sh', '-c', 'echo Waiting for MongoDB and Storage... && until nc -z -w 2 mongodb-svc 27017; do sleep 1; done; until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
+      containers:
+      - name: processing
+        image: galaxygong/processing:v1.0
+        ports:
+        - containerPort: 8100
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"

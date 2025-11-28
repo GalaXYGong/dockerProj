@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-external
+  labels:
+    app: api-gateway
+spec:
+  type: LoadBalancer # 用于获取外部 IP 地址
+  ports:
+  - port: 80 # 外部访问端口
+    targetPort: 8099 # 容器端口
+    protocol: TCP
+  selector:
+    app: api-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      # InitContainer: 等待 Storage 服务启动
+      initContainers:
+      - name: wait-for-storage
+        image: busybox
+        command: ['sh', '-c', 'echo Waiting for Storage... && until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
+      containers:
+      - name: api-gateway
+        image: galaxygong/api_gateway:v1.0 # <<<<<<<< 替换为您的镜像
+        ports:
+        - containerPort: 8099
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
