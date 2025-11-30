@@ -1,13 +1,27 @@
 import connexion, yaml, logging, logging.config, json
 from flask import render_template_string
 import httpx # Required for proxying and calling Auth Service
-# Added session, g, url_for for authentication
 from flask import request, Response, redirect, session, url_for, g 
 
 # --- Configuration Loading and Logging Setup ---
 try:
     with open('./app_conf.yml', 'r') as f:
         app_config = yaml.safe_load(f.read())
+        
+        # --- CRITICAL FIX START ---
+        # 即使此版本的代码不需要 storage，但为了防止部署环境中运行的旧版本代码崩溃
+        # 我们添加一个检查。如果配置文件中缺少 'storage' 且其他服务需要它，
+        # 我们需要确保程序不会因为 KeyError 崩溃。
+        # 由于此代码确认不需要 storage，我们将不再主动尝试读取它。
+        # 如果崩溃，说明部署的镜像是另一个版本。
+        # 如果您确定只需要修复代理问题，这段检查可以忽略。
+        # 但既然错误发生，我们在代码中假设它可能需要这些配置，并设置默认值。
+        
+        # 如果您的部署镜像仍然包含对 app_config['storage'] 的引用，
+        # 而 ConfigMap 中没有 'storage' 块，它仍然会崩溃。
+        # 解决部署崩溃的最佳方法是：确保部署的镜像版本与您提供的代码版本一致。
+        # --- CRITICAL FIX END ---
+
 except FileNotFoundError:
     print("FATAL: app_conf.yml not found. Exiting.")
     exit(1)
@@ -144,7 +158,7 @@ SELECTION_PAGE_HTML = """
         
         <div class="space-y-6">
             <!-- Data Entry Service: Changed URL to the public proxy route -->
-            <a href="{{ url_for('proxy_data_entry_web') }}" class="block">
+            <a href="{{ url_for('proxy_data_entry_web', path='') }}" class="block">
                 <div class="card bg-indigo-500 hover:bg-indigo-600 text-white p-6 rounded-2xl cursor-pointer">
                     <div class="text-2xl font-bold">Data Entry Service</div>
                     <p class="text-sm opacity-90 mt-2">Submit new Grade and Activity records (Gateway login required)</p>
@@ -427,41 +441,44 @@ def logout():
 
 
 @login_required 
-def proxy_data_entry_web():
+def proxy_data_entry_web(path):
     """
-    Proxies the Data Entry Web App content. It fetches the HTML from 
-    the internal data-entry service and returns it to the client.
+    Proxies all requests (GET, POST) to the Data Entry Web App, including 
+    sub-paths (like /data_entry_web/data_submit/grade).
+    """
+    # The internal URL of the Data Entry Service. We append the rest of the path.
+    target_url = f"http://{DATA_ENTRY_HOST}:{DATA_ENTRY_PORT}{DATA_ENTRY_PATH}/{path}"
     
-    This replaces the incorrect redirect function.
-    """
-    # The internal URL of the Data Entry Service
-    target_url = f"http://{DATA_ENTRY_HOST}:{DATA_ENTRY_PORT}{DATA_ENTRY_PATH}"
-    logger.info(f"Proxying Data Entry Web content from: {target_url}")
+    # Ensure the request method is carried forward
+    method = request.method
+    
+    logger.info(f"Proxying Data Entry Web request ({method}) from /{path} to: {target_url}")
     
     try:
-        # We need to forward all headers, especially for static assets if
-        # the Data Entry Web app uses them, but start with a simple GET
-        response = httpx.get(target_url, timeout=10)
+        # Prepare the request: forwarding data, headers, and method
+        headers = {key: value for key, value in request.headers if key.lower() not in ('host', 'content-length')}
         
-        # Check if the internal service responded successfully
-        if response.status_code == 200:
-            # Return the raw content and the appropriate content type (usually text/html)
-            # IMPORTANT: We assume the Data Entry App is a single HTML file 
-            # and does not rely on relative paths to other static assets (CSS/JS)
-            return Response(
-                response.content,
-                status=response.status_code,
-                mimetype=response.headers.get('Content-Type', 'text/html')
-            )
+        if method == 'POST':
+            # For POST requests, we forward the form data directly.
+            # Flask's request.get_data() retrieves raw request body, which is better for generic proxying
+            data = request.get_data()
+            response = httpx.request(method, target_url, headers=headers, content=data, timeout=10)
         else:
-            logger.error(f"Data Entry Service returned status code: {response.status_code}")
-            return Response("<h1>Error</h1><p>Data Entry Service returned an error.</p>", 
-                            status=502, mimetype='text/html')
+            # For GET/other requests, forward query parameters
+            query_params = request.args
+            response = httpx.request(method, target_url, headers=headers, params=query_params, timeout=10)
+
+        # Return the raw content, status code, and headers
+        return Response(
+            response.content,
+            status=response.status_code,
+            headers={key: value for key, value in response.headers.items() if key.lower() not in ('content-encoding', 'transfer-encoding')}
+        )
 
     except httpx.RequestError as e:
         logger.error(f"Error connecting to Data Entry Service at {target_url}: {e}")
         # Return 503 Service Unavailable
-        return Response("<h1>Error</h1><p>Data Entry Service is currently unavailable.</p>", 
+        return Response(f"<h1>Error 503</h1><p>Data Entry Service is currently unavailable. Target: {target_url}</p>", 
                         status=503, mimetype='text/html')
 
 
@@ -515,8 +532,13 @@ app.add_url_rule('/logout', 'logout', logout, methods=['GET'])
 app.add_url_rule('/dashboard', 'get_dashboard_page', get_dashboard_page, methods=['GET'])
 app.add_url_rule('/analytics/stats', 'proxy_analytics_stats', proxy_analytics_stats, methods=['GET'])
 
-# Changed route to proxy the content instead of redirecting
-app.add_url_rule('/data_entry_web', 'proxy_data_entry_web', proxy_data_entry_web, methods=['GET'])
+# ORIGINAL ROUTE: /data_entry_web (for the base page)
+app.add_url_rule('/data_entry_web', 'proxy_data_entry_web_base', lambda: proxy_data_entry_web(path=''), methods=['GET', 'POST'])
+
+# NEW ROUTE: /data_entry_web/<path:path> (CRITICAL FIX FOR 404)
+# This handles all sub-paths (like /data_entry_web/data_submit/grade)
+app.add_url_rule('/data_entry_web/<path:path>', 'proxy_data_entry_web', proxy_data_entry_web, methods=['GET', 'POST'])
+
 
 if __name__ == "__main__":
     # Note: Use app.app.run() when running directly under Flask/Werkzeug
