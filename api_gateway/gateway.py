@@ -143,8 +143,8 @@ SELECTION_PAGE_HTML = """
         <p class="text-gray-600 mb-10 text-lg">Please select the service module you wish to access.</p>
         
         <div class="space-y-6">
-            <!-- Data Entry Service -->
-            <a href="{{ url_for('redirect_to_data_entry') }}" class="block">
+            <!-- Data Entry Service: Changed URL to the public proxy route -->
+            <a href="{{ url_for('proxy_data_entry_web') }}" class="block">
                 <div class="card bg-indigo-500 hover:bg-indigo-600 text-white p-6 rounded-2xl cursor-pointer">
                     <div class="text-2xl font-bold">Data Entry Service</div>
                     <p class="text-sm opacity-90 mt-2">Submit new Grade and Activity records (Gateway login required)</p>
@@ -251,7 +251,7 @@ DASHBOARD_HTML_CONTENT = """
             </div>
 
             <div class="stat-card bg-white p-6 shadow-md border-l-4 border-blue-500">
-                <p class="text-sm font-medium text-gray-500">Maximum Activity Hours</p>
+                <p id="max-activity-label" class="text-sm font-medium text-gray-500">Maximum Activity Hours</p>
                 <p id="max-activity" class="mt-2 text-4xl font-bold text-gray-900">--</p>
             </div>
         </div>
@@ -427,14 +427,42 @@ def logout():
 
 
 @login_required 
-def redirect_to_data_entry():
+def proxy_data_entry_web():
     """
-    Redirects the user's browser to the actual Data Entry Web App URL.
-    This app handles its own authentication.
+    Proxies the Data Entry Web App content. It fetches the HTML from 
+    the internal data-entry service and returns it to the client.
+    
+    This replaces the incorrect redirect function.
     """
+    # The internal URL of the Data Entry Service
     target_url = f"http://{DATA_ENTRY_HOST}:{DATA_ENTRY_PORT}{DATA_ENTRY_PATH}"
-    logger.info(f"Redirecting user to Data Entry Service at: {target_url}")
-    return redirect(target_url, code=302)
+    logger.info(f"Proxying Data Entry Web content from: {target_url}")
+    
+    try:
+        # We need to forward all headers, especially for static assets if
+        # the Data Entry Web app uses them, but start with a simple GET
+        response = httpx.get(target_url, timeout=10)
+        
+        # Check if the internal service responded successfully
+        if response.status_code == 200:
+            # Return the raw content and the appropriate content type (usually text/html)
+            # IMPORTANT: We assume the Data Entry App is a single HTML file 
+            # and does not rely on relative paths to other static assets (CSS/JS)
+            return Response(
+                response.content,
+                status=response.status_code,
+                mimetype=response.headers.get('Content-Type', 'text/html')
+            )
+        else:
+            logger.error(f"Data Entry Service returned status code: {response.status_code}")
+            return Response("<h1>Error</h1><p>Data Entry Service returned an error.</p>", 
+                            status=502, mimetype='text/html')
+
+    except httpx.RequestError as e:
+        logger.error(f"Error connecting to Data Entry Service at {target_url}: {e}")
+        # Return 503 Service Unavailable
+        return Response("<h1>Error</h1><p>Data Entry Service is currently unavailable.</p>", 
+                        status=503, mimetype='text/html')
 
 
 @login_required 
@@ -487,7 +515,8 @@ app.add_url_rule('/logout', 'logout', logout, methods=['GET'])
 app.add_url_rule('/dashboard', 'get_dashboard_page', get_dashboard_page, methods=['GET'])
 app.add_url_rule('/analytics/stats', 'proxy_analytics_stats', proxy_analytics_stats, methods=['GET'])
 
-app.add_url_rule('/data_entry_web', 'redirect_to_data_entry', redirect_to_data_entry, methods=['GET'])
+# Changed route to proxy the content instead of redirecting
+app.add_url_rule('/data_entry_web', 'proxy_data_entry_web', proxy_data_entry_web, methods=['GET'])
 
 if __name__ == "__main__":
     # Note: Use app.app.run() when running directly under Flask/Werkzeug
