@@ -34,7 +34,7 @@ spec:
         command: ['sh', '-c', 'echo Waiting for Storage... && until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
       containers:
       - name: api-gateway
-        image: galaxygong/api-gateway:v7.8 # <<<<<<<< 替换为您的镜像
+        image: galaxygong/api-gateway:v7.9 # <<<<<<<< 替换为您的镜像
         ports:
         - containerPort: 8099
         resources:
