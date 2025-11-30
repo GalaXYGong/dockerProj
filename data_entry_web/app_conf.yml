@@ -1,4 +1,4 @@
 storage:
-  host: storage
+  host: storage-svc
   port: 8090
 
