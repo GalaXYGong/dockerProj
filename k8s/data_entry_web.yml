@@ -32,7 +32,7 @@ spec:
         command: ['sh', '-c', 'echo Waiting for Storage... && until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
       containers:
       - name: data-entry-web
-        image: galaxygong/data-entry-web:v3.2 # <<<<<<<< 替换为您的镜像
+        image: galaxygong/data-entry-web:v3.3 # <<<<<<<< 替换为您的镜像
         ports:
         - containerPort: 8071
         resources:
