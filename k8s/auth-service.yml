@@ -32,7 +32,7 @@ spec:
         command: ['sh', '-c', 'echo Waiting for Storage... && until nc -z -w 2 storage-svc 8090; do sleep 1; done;']
       containers:
       - name: auth-service
-        image: galaxygong/auth_service:v1.0 # <<<<<<<< 替换为您的镜像
+        image: galaxygong/auth-service:v2.0 # <<<<<<<< 替换为您的镜像
         ports:
         - containerPort: 8070
         resources:

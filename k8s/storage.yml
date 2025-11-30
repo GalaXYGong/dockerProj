@@ -32,7 +32,7 @@ spec:
         command: ['sh', '-c', 'echo Waiting for MySQL... && until nc -z -w 2 mysql-svc 3306; do sleep 1; done;']
       containers:
       - name: storage
-        image: galaxygong/storage:v1.0 # <<<<<<<< 替换为您的镜像
+        image: galaxygong/storage:v2.0 # <<<<<<<< 替换为您的镜像
         ports:
         - containerPort: 8090
         # 容器启动命令：执行表创建脚本，然后启动 uvicorn
