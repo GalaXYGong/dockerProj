@@ -37,6 +37,218 @@ AUTH_SERVICE_URL = f'http://{AUTH_SERVICE_HOST}:{AUTH_SERVICE_PORT}'
 DATA_ENTRY_WEB_URL = f'http://{DATA_ENTRY_HOST}:{DATA_ENTRY_PORT}'
 ANALYTICS_SERVICE_URL = f'http://{ANALYTICS_HOST}:{ANALYTICS_PORT}'
 
+
+# --- Dashboard HTML Content (Restored) ---
+DASHBOARD_HTML_CONTENT = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Statistics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .stat-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border-radius: 12px; /* Consistent rounding */
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <header class="mb-8 p-6 bg-white rounded-xl shadow-xl border-b-4 border-teal-500">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Real-time System Statistics Dashboard</h1>
+                <a href="/" class="py-2 px-4 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition shadow-md">Back to Selection</a>
+            </div>
+            <p class="text-gray-600 mt-2">Data proxied from Analytics Service via API Gateway.</p>
+        </header>
+
+        <div id="loading" class="text-center p-8 text-xl font-semibold text-teal-600 animate-pulse">
+            Loading data...
+        </div>
+        <div id="error-message" class="hidden text-center p-4 bg-red-100 text-red-700 rounded-xl shadow-md font-medium border border-red-300">
+            Could not fetch statistics from the Gateway. Please check the Analytics Service connection.
+        </div>
+
+        <!-- UPDATED: Added avg fields and changed grid to 4 columns -->
+        <div id="stats-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 hidden">
+
+            <!-- Grade Stats -->
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-green-500">
+                <p class="text-sm font-medium text-gray-500">Total Grade Readings</p>
+                <p id="grade-count" class="mt-2 text-4xl font-bold text-green-600">--</p>
+            </div>
+            
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-green-500">
+                <p class="text-sm font-medium text-gray-500">Average Score</p>
+                <p id="avg-grade" class="mt-2 text-4xl font-bold text-green-600">--</p>
+            </div>
+
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-green-500">
+                <p class="text-sm font-medium text-gray-500">Minimum Score</p>
+                <p id="min-grade" class="mt-2 text-4xl font-bold text-gray-900">--</p>
+            </div>
+
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-green-500">
+                <p class="text-sm font-medium text-gray-500">Maximum Score</p>
+                <p id="max-grade" class="mt-2 text-4xl font-bold text-gray-900">--</p>
+            </div>
+
+            <!-- Activity Stats -->
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Total Activity Readings</p>
+                <p id="activity-count" class="mt-2 text-4xl font-bold text-blue-600">--</p>
+            </div>
+            
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Average Activity Hours</p>
+                <p id="avg-activity" class="mt-2 text-4xl font-bold text-blue-600">--</p>
+            </div>
+            
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Minimum Activity Hours</p>
+                <p id="min-activity" class="mt-2 text-4xl font-bold text-gray-900">--</p>
+            </div>
+
+            <div class="stat-card bg-white p-6 shadow-md border-l-4 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Maximum Activity Hours</p>
+                <p id="max-activity" class="mt-2 text-4xl font-bold text-gray-900">--</p>
+            </div>
+        </div>
+        
+        <footer class="mt-8 p-6 bg-white rounded-xl shadow-xl">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Update Information</h2>
+            <div class="flex flex-col md:flex-row md:justify-between text-gray-600 text-sm space-y-2 md:space-y-0">
+                <p class="font-medium">Last Checkpoint Update Time: <span id="last-updated-time" class="font-semibold text-gray-800 ml-2">--</span></p>
+                <p class="font-medium">Next Automatic Refresh: <span id="next-refresh" class="font-semibold text-teal-600 ml-2">--</span></p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // API Gateway Proxy Route
+        const API_URL = '/analytics/stats'; 
+        const REFRESH_INTERVAL_MS = 10000; // 10 seconds refresh interval
+        
+        function formatTimestamp(ms) {
+            if (ms === 0) return 'No data processed yet';
+            const date = new Date(ms);
+            // Use English localized format
+            return date.toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit', 
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
+        }
+
+        async function fetchAndDisplayStats() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('error-message').classList.add('hidden');
+            document.getElementById('stats-container').classList.add('hidden');
+
+            const MAX_RETRIES = 5;
+            let success = false;
+
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    // Fetching data from gateway proxy path
+                    const response = await fetch(API_URL); 
+                    if (!response.ok) {
+                        // If gateway returns 401/403 (unauthorized), stop retrying and show error.
+                        if (response.status === 401 || response.status === 403) {
+                             document.getElementById('error-message').innerHTML = 'Access denied. Please log in to the Gateway.';
+                             i = MAX_RETRIES; // Stop loop
+                             break;
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const stats = await response.json();
+                    
+                    // Populate data cards
+                    document.getElementById('grade-count').textContent = stats.num_grade_readings;
+                    document.getElementById('avg-grade').textContent = stats.avg_grade_readings !== undefined ? stats.avg_grade_readings.toFixed(2) : '--';
+                    document.getElementById('min-grade').textContent = stats.min_grade_readings !== undefined ? stats.min_grade_readings.toFixed(1) : '--';
+                    document.getElementById('max-grade').textContent = stats.max_grade_readings !== undefined ? stats.max_grade_readings.toFixed(1) : '--';
+                    
+                    document.getElementById('activity-count').textContent = stats.num_activity_readings;
+                    document.getElementById('avg-activity').textContent = stats.avg_activity_hours !== undefined ? stats.avg_activity_hours.toFixed(2) : '--';
+                    document.getElementById('min-activity').textContent = stats.min_activity_hours !== undefined ? stats.min_activity_hours.toFixed(1) : '--';
+                    document.getElementById('max-activity').textContent = stats.max_activity_hours !== undefined ? stats.max_activity_hours.toFixed(1) : '--';
+
+                    // Populate footer information
+                    document.getElementById('last-updated-time').textContent = formatTimestamp(stats.last_updated);
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('stats-container').classList.remove('hidden');
+                    
+                    success = true;
+                    break; 
+
+                } catch (error) {
+                    console.error("Fetch attempt failed:", error);
+                    if (i < MAX_RETRIES - 1) {
+                        const delay = Math.pow(2, i) * 1000; 
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+            
+            if (!success) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('stats-container').classList.add('hidden');
+                document.getElementById('error-message').classList.remove('hidden');
+            }
+        }
+        
+        function startAutoRefresh() {
+            fetchAndDisplayStats(); 
+            
+            setInterval(() => {
+                fetchAndDisplayStats();
+                updateNextRefreshTime();
+            }, REFRESH_INTERVAL_MS);
+
+            updateNextRefreshTime(); 
+        }
+
+        function updateNextRefreshTime() {
+            const nextRefreshElement = document.getElementById('next-refresh');
+            let remaining = REFRESH_INTERVAL_MS / 1000;
+            
+            nextRefreshElement.textContent = `Countdown ${remaining} seconds`;
+            
+            const countdownInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    nextRefreshElement.textContent = 'Refreshing';
+                } else {
+                    nextRefreshElement.textContent = `Countdown ${remaining} seconds`;
+                }
+            }, 1000);
+        }
+
+        window.onload = startAutoRefresh;
+
+    </script>
+</body>
+</html>
+"""
+
+
 # --- Utility Functions ---
 
 def is_authenticated():
@@ -86,8 +298,8 @@ def get_selection_page():
 
 @login_required
 def get_dashboard_page():
-    """Renders the dashboard page (placeholder for now)."""
-    return render_template_string("<h1>Analytics Dashboard</h1><p>Data will be loaded here from the Analytics Service.</p><p><a href='/'>Home</a> | <a href='/logout'>Logout</a></p>")
+    """Renders the dashboard page by returning the full HTML content with embedded JS."""
+    return render_template_string(DASHBOARD_HTML_CONTENT)
 
 
 def login():
@@ -198,7 +410,6 @@ def proxy_data_entry_web(path):
     """Proxies requests for the Data Entry Web App."""
     
     # 1. Construct Target URL
-    # path='' for /data_entry_web, path='submit' for /data_entry_web/submit or /submit (shim)
     target_url = urljoin(DATA_ENTRY_WEB_URL, path)
     
     # Preserve original query string
@@ -238,11 +449,9 @@ def proxy_data_entry_web(path):
                 if location == '/' or location.startswith('/?'):
                     # The redirect is going to the web app's homepage.
                     
-                    # CRITICAL FIX: Ensure the corrected path always results in /data_entry_web/ 
-                    # before the query string to match the new route definition below.
+                    # Remove leading slash from location to avoid double slashes 
+                    # when joining with the gateway's base path /data_entry_web/
                     if location.startswith('/'):
-                        # Remove leading slash from location to avoid double slashes 
-                        # when joining with the gateway's base path /data_entry_web/
                         location = location[1:] 
 
                     redirect_path = f"/data_entry_web/{location}" # e.g. /data_entry_web/?status=...
@@ -288,6 +497,8 @@ def proxy_analytics_stats():
 
         response = httpx.get(target_url, headers=headers, timeout=10)
         
+        # NOTE: Do NOT use response.json() here. Proxy raw content.
+        
         if response.status_code == 200:
             logger.info(f"Analytics Service response status 200. Content length: {len(response.content)}.")
             return Response(response.content, response.status_code, response.headers)
@@ -297,6 +508,7 @@ def proxy_analytics_stats():
 
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy request to Analytics Service: {e}")
+        # Return a 503 JSON response for the frontend to handle gracefully
         return Response(json.dumps({"message": "Service Unavailable: Analytics Service"}), 503, {'Content-Type': 'application/json'})
 
 # --- SHIM FUNCTION FOR /submit POST ---
@@ -324,7 +536,10 @@ app.app.add_url_rule('/', 'get_selection_page', get_selection_page, methods=['GE
 app.app.add_url_rule('/login', 'login', login, methods=['GET', 'POST'])
 app.app.add_url_rule('/logout', 'logout', logout, methods=['GET'])
 
+# Dashboard route restored to serve the full HTML with embedded JS
 app.app.add_url_rule('/dashboard', 'get_dashboard_page', get_dashboard_page, methods=['GET'])
+
+# Proxy route for the dashboard's internal API call
 app.app.add_url_rule('/analytics/stats', 'proxy_analytics_stats', proxy_analytics_stats, methods=['GET'])
 
 # --- DATA ENTRY WEB APP PROXY ROUTES ---
