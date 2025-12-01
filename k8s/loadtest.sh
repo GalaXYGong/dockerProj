@@ -9,7 +9,7 @@
 # 将 YOUR_EXTERNAL_IP 替换为您的 api-gateway-external Service 的外部 IP 地址
 # 您可以通过以下命令获取：
 # kubectl get svc api-gateway-external -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-EXTERNAL_IP=34.60.118.29 
+EXTERNAL_IP=34.60.118.29  # <<<<<<<< need to be replaced
 echo "Using EXTERNAL_IP: $EXTERNAL_IP"
 API_ENDPOINT="/data_entry_web" # 目标 API 路径，会由 API Gateway 代理到 data-entry-web
 TOTAL_CONCURRENCY=500          # 模拟同时运行的请求总数
