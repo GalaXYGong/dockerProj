@@ -18,3 +18,11 @@ spec:
       target:
         type: Utilization
         averageUtilization: 50
+  behavior:
+    scaleDown:
+      selectPolicy: Max
+      stabilizationWindowSeconds: 30 
+      policies:
+      - type: Pods
+        value: 1 # 一次最多减少 1 个 Pod
+        periodSeconds: 30
