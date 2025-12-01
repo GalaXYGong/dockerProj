@@ -4,7 +4,7 @@ list=("mongodb.yml" "mysql.yml" "storage.yml" "processing.yml" "auth-service.yml
 for file in "${list[@]}";
 do
     echo "start applying $file ..."
-    # kubectl apply -f $file
+    kubectl apply -f $file
     echo "Applied $file"
     sleep 5
 done
