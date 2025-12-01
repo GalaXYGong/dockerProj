@@ -8,8 +8,7 @@ analytics_service:
 
 data_entry_service:
   host: data-entry-web-svc
-  port: 8071 # 已更新为 Data Entry Service 运行的端口
-  path: /data_entry_service # 已更新为用户期望的路径
+  port: 8071
 
 auth_service: 
   host: auth-service-svc
