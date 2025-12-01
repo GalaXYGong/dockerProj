@@ -30,5 +30,7 @@ you can run the following command to watch the HPA status during load test:
 ```bash
 watch kubectl get hpa,pods
 ```
-you will see the number of pods for api-gateway deployment scale up and down based on the CPU utilization.
+you will see the number of pods for api-gateway deployment scale up and down based on the CPU utilization. from 2 - 5 pods。
+![alt text](<Pasted image 20251130174040.png>)
 after stopping the load test, you can see the HPA scales down the pods to the minimum number defined in the HPA configuration in 1 minute.
+![alt text](<Pasted image 20251130174318.png>)
