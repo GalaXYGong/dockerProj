@@ -1,9 +1,10 @@
 #!/bin/bash
-list="mongodb.yml", "mysql.yml", "storage.yml", "processing.yml", "auth-service.yml", "data_entry_web.yml", "api-gateway.yml"
-for file in $list
+set -e
+list=("mongodb.yml" "mysql.yml" "storage.yml" "processing.yml" "auth-service.yml" "data_entry_web.yml" "api-gateway.yml")
+for file in "${list[@]}";
 do
     echo "start applying $file ..."
-    kubectl apply -f $file
+    # kubectl apply -f $file
     echo "Applied $file"
     sleep 5
 done
