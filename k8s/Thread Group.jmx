@@ -58,7 +58,7 @@
       </ThreadGroup>
       <hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
-          <stringProp name="HTTPSampler.domain">34.60.118.29</stringProp>
+          <stringProp name="HTTPSampler.domain">34.122.94.24</stringProp>
           <stringProp name="HTTPSampler.path">/data_entry_web</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>

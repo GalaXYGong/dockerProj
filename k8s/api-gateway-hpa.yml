@@ -4,7 +4,6 @@ metadata:
   name: api-gateway-hpa
 spec:
   scaleTargetRef:
-    # 目标 Deployment 名称
     apiVersion: apps/v1
     kind: Deployment
     name: api-gateway-deployment 
@@ -14,7 +13,6 @@ spec:
   - type: Resource
     resource:
       name: cpu
-      # 当 CPU 利用率达到 50% 时触发伸缩
       target:
         type: Utilization
         averageUtilization: 50
@@ -24,5 +22,5 @@ spec:
       stabilizationWindowSeconds: 30 
       policies:
       - type: Pods
-        value: 1 # 一次最多减少 1 个 Pod
+        value: 1 
         periodSeconds: 30
